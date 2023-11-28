@@ -1,6 +1,6 @@
 #ifndef stdcomm_h
 #define stdcomm_h
-
+#test
 // Function Prototypes
 int add(int, int);
 //void send_all(int, char[]);
