@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 ###################################################################
-#
 #       Names: Anthony Nelson, Zaynin Henthorn, Adam Wisnewski
 #       Course: CSC328 (Network Programming)
 #       Semester/Year: Fall 2023
