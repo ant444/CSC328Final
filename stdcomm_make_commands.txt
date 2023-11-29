@@ -1,0 +1,4 @@
+These are the commands you are to run when creating the stdcomm.so library in your local directory.
+Run them in order.
+gcc -c -Wall -Werror -fpic stdcomm.c
+gcc -shared -o stdcomm.so stdcomm.o
