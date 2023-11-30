@@ -59,8 +59,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("DONE")
 
-
-
-
-if __name__ == '__main__':
-  main()
