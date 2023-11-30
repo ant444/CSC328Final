@@ -8,6 +8,13 @@ import socket
 def create_word_packet(message, type):
     if isinstance(message, str) and isinstance(type, str) and len(type) == 1:      # Ensure that you have two strings, and the type has length of 1.
         msg_length_be = len(message).to_bytes(2, 'big')                            # Get the message length in big endian, in two bytes.
+        
+        if type == "c" and message[0] == "/":                                      # If the message is a command, do not put the "/" in the word packet.
+            message = message[1:len(message)]
+            bytes_msg = message.encode('utf+8')
+        else:
+            bytes_msg = message.encode('utf+8')
+        
         bytes_msg = message.encode('utf+8')
         bytes_type = type.encode('utf+8')
         word_packet = (msg_length_be + bytes_type + bytes_msg)                        # Construct word packet
