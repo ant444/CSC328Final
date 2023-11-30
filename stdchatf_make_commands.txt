@@ -1,0 +1,4 @@
+ 1 Run these commands, in order, to create the library .so file.
+ 
+ gcc -c -Wall -Werror -fpic stdchatf.c
+ gcc -shared -o stdchatf.so stdchatf.o
