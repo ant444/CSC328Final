@@ -21,42 +21,47 @@
 ####################################################################
 import socket
 import sys
-import json
+import ctypes
+
+stdchatf = ctypes.CDLL('./stdchatf.so')
+#import stdcomm.so
+#def receive_word(s, word_length):
+#    received = b''
+#    while len(received) < word_length:
+#        chunk = s.recv(word_length - len(received))
+#        if not chunk:
+#            # Handle error or break loop
+#            break
+#        received += chunk
+#    return received
+
+
+stdchatf.recv_word_packet.argtypes = [ctypes.c_int]
+stdchatf.recv_word_packet.restype = ctypes.c_char_p
+
+def receive_word_packet(s):
+    word_packet = stdchatf.recv_word_packet(s.fileno())
+    print(f'Word Packet: {word_packet}')
+    return word_packet
 
 
 def main():
     if len(sys.argv) != 3:
-        exit('Usage: <host> <port>')
+        print('Usage: python script.py <host> <port>')
+        return
+
+    host = sys.argv[1]
+    port = int(sys.argv[2])
+
     try:
         with socket.socket() as s:
-            s.connect((sys.argv[1], int(sys.argv[2])))
+            s.connect((host, port))
             while True:
-                word_length = int.from_bytes # call read and 'big'
-                if word_length == 0: break
-                word = #read (parameters)
-                print(word.decode())
-    except OSError as e:
-        exit(f'{e}')
+                word_data = receive_word_packet(s)
+                print(word_data)
 
+    except OSError as e:
+        print(f'Error: {e}')
 
 if __name__ == '__main__':
     main()
-
-
-##########################################################
-#
-#   Function Name: getAndSendNick
-#
-#   Description:
-#
-#
-#   Parameters:
-#
-#
-#
-#
-#
-#
-#   Return Values: 
-#
-##########################################################
