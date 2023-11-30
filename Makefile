@@ -13,7 +13,7 @@
 CFLAGS = -fPIC -Wall -Werror -Wextra -shared
 CC = gcc #c compiler
 
-all: server client stdcomm.so
+all: server client stdchat.so
 
 server: server.py
     cp server.py server
@@ -23,11 +23,16 @@ client: client.py
     cp client.py client
     chmod u+x client
 
-stdcomm.so: stdcomm.o
-    $(CC) $(CFLAGS) -o stdcomm.so stdcomm.o
+stdwp: stdwp.py
+    cp stdwp.py
+    chmod u+x stdwp
 
-stdcomm.o: stdcomm.c
-    $(CC) -c -Wall -Werror -fpic stdcomm.c
+
+stdchatf.so: stdchatf.o
+    $(CC) $(CFLAGS) -o stdchatf.so stdchatf.o
+
+stdchat.o: stdchatf.c
+    $(CC) -c -Wall -Werror -fpic stdchatf.c
 
 .PHONY: submit clean
 submit:
@@ -36,7 +41,8 @@ submit:
 clean:
     rm -f server
     rm -f client
+    rm -f stdwp
     rm -f *.o
-    rm -f stdcomm.so
+    rm -f stdchatf.so
 
 
