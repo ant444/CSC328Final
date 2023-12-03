@@ -13,9 +13,9 @@
 ###################################################################
 
 
-import socket 
+import socket
 import sys
-import json
+from datetime import datetime
 
 def readPackets(s, num):
     bytes = b''
@@ -26,33 +26,56 @@ def readPackets(s, num):
     return bytes
 
 if __name__ == "__main__":
-   if len(sys.argv) > 2:
+    if len(sys.argv) > 2:
         exit("Too many arguments.")
-   try:
+    try:
         if len(sys.argv) == 1:
             portNum = 3001
         else:
             portNum = int(sys.argv[1]))
 
         with socket.socket() as s:
-            s.bind(portNum)
+            s.bind('', portNum)
             s.listen(1)
             while True:
+                clientIP = s.gethostbyname(s.gethostbyname())
                 conn, addr = s.accept()
                 with conn:
                     conn.sendall("HELLO")
 
-                    length = readPackets(s, 2)
-                    if length == 0:
-                        break
-                    nickname = readPackets(s, length)
+                    while isUnique == 0:
+                        length = readPackets(s, 2)
+                        if length == 0:
+                            break
+                        skip = readPackets(s, 1)
+                        nickname = readPackets(s, length)
+                        isUnique = isNicknameUnique('nicknames.txt", nickname)
+                        if isUnique == 0:
+                            conn.sendall("RETRY")
                     #zaynin's code to put nickname stuff in
 
-                while(chat != "quit"):
-                    length = readPackets(s, 2)
-                    if length == 0:
-                        break
-                    chat = readPackets(s, length)
+                    storeNickname("nicknames.txt", datetime.now().encode('utf+8'), clientIP.encode('utp+8'), nickname)
+                    conn.sendall("READY")
+
+                    while(chat != "quit" and type != c):
+                        length = readPackets(s, 2)
+                        wordPacket = length+readPackets(s, length+1)
+                        chat = extract_word_packet_message(wordPacket)
+                        type = get_word_packet_type(wordPacket)
+
+                        if length == 0:
+                            break
+
+                        if type == c:
+                            command_parts = chat.split()
+                            if command_parts[0] == "nick":
+                                nickname = command_parts[1].encode('utf+8')
+                                isUnique = isNicknameUnique('nicknames.txt", nickname)
+                                while isUnique == 0:
+                                    storeNickname("nicknames.txt", datetime.now().encode('utf+8'), clientIP.encode('utp+8'), nickname)
+                                    conn.sendall("READY")
+                                else:
+                                    conn.sendall("RETRY")
                     #zaynin's code for putting into log file
     except OSError as e:
         exit(f'{e}')
