@@ -21,47 +21,60 @@
 ####################################################################
 import socket
 import sys
-import ctypes
-
-stdchatf = ctypes.CDLL('./stdchatf.so')
-#import stdcomm.so
-#def receive_word(s, word_length):
-#    received = b''
-#    while len(received) < word_length:
-#        chunk = s.recv(word_length - len(received))
-#        if not chunk:
-#            # Handle error or break loop
-#            break
-#        received += chunk
-#    return received
-
-
-stdchatf.recv_word_packet.argtypes = [ctypes.c_int]
-stdchatf.recv_word_packet.restype = ctypes.c_char_p
 
 def receive_word_packet(s):
-    word_packet = stdchatf.recv_word_packet(s.fileno())
-    print(f'Word Packet: {word_packet}')
+    word_length = int.from_bytes(s.recv(2), byteorder='big')  # Receive the word length
+    word_packet = s.recv(word_length)  # Receive the word packet based on the length received
     return word_packet
 
 
+
+
+def send_nickname(s):
+    nickname = input("Please enter a nickname: ")
+    print("Welcome,", nickname)
+    #Get length of nickname
+    nick_length = len(nickname)
+    typemessage = b'c'
+    bytenick = nick_length.to_bytes(2, byteorder = 'big')
+    nickname_bytes = bytes(nickname, 'utf-8')
+    nicknamewordpacket = bytenick + typemessage + nickname_bytes
+    s.sendall(nicknamewordpacket)
+
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 2:
         print('Usage: python script.py <host> <port>')
         return
 
     host = sys.argv[1]
-    port = int(sys.argv[2])
 
+
+    if len(sys.argv) > 2:
+        try:
+            port = int(sys.argv[2])
+        except ValueError:
+            print("Port has to be an integer!!!!!")
+            return
+    else:
+        port = 18008 #Defaulting the port
     try:
         with socket.socket() as s:
             s.connect((host, port))
             while True:
                 word_data = receive_word_packet(s)
-                print(word_data)
+                send_nickname(s)
+                try:
+                    decoded_data = word_data.decode('utf-8')  # Decode the received data
+                    print(f'Word Packet: {decoded_data}')
+                except UnicodeDecodeError:
+                    print('Unable to decode the received data')
 
-    except OSError as e:
-        print(f'Error: {e}')
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt:Program Terminated")
+
 
 if __name__ == '__main__':
     main()
+
+
+
