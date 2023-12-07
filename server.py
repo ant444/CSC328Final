@@ -41,28 +41,33 @@ if __name__ == "__main__":
                 clientIP = s.gethostbyname(s.gethostbyname())
                 conn, addr = s.accept()
                 with conn:
-                    conn.sendall("HELLO")
+                    hello = create_word_packet("HELLO", 'm')
+                    conn.sendall(hello)
 
+                    #loop for asking for nickname and checking if nickname is unique
                     while isUnique == 0:
                         length = readPackets(s, 2)
                         if length == 0:
                             break
                         skip = readPackets(s, 1)
                         nickname = readPackets(s, length)
+
                         isUnique = isNicknameUnique('nicknames.txt", nickname)
                         if isUnique == 0:
-                            conn.sendall("RETRY")
-                    #zaynin's code to put nickname stuff in
+                            retry = create_word_packet("RETRY", 'm')
+                            conn.sendall(retry)
 
+                    #zaynin's code to put nickname stuff in
                     storeNickname("nicknames.txt", datetime.now().encode('utf+8'), clientIP.encode('utp+8'), nickname)
-                    conn.sendall("READY")
+                    ready = create_word_packet("READY", 'm')
+                    conn.sendall(ready)
 
                     while(chat != "quit" and type != c):
                         length = readPackets(s, 2)
                         wordPacket = length+readPackets(s, length+1)
                         chat = extract_word_packet_message(wordPacket)
                         type = get_word_packet_type(wordPacket)
-
+                        
                         if length == 0:
                             break
 
@@ -73,12 +78,14 @@ if __name__ == "__main__":
                                 isUnique = isNicknameUnique('nicknames.txt", nickname)
                                 while isUnique == 0:
                                     storeNickname("nicknames.txt", datetime.now().encode('utf+8'), clientIP.encode('utp+8'), nickname)
-                                    conn.sendall("READY")
+                                    conn.sendall(ready)
                                 else:
-                                    conn.sendall("RETRY")
+                                    retry = create_word_packet("RETRY", 'm')
+                                    conn.sendall(retry)
                     #zaynin's code for putting into log file
-    except OSError as e:
+                        else:
+                         #   writeToLogFile(logfile, datetime.now().encode('utf+8'), nickname, chat)
+        except OSError as e:
         exit(f'{e}')
     except KeyboardInterrupt:
         print("DONE")
-
