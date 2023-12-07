@@ -22,11 +22,15 @@
 import socket
 import sys
 
+
+
 def receive_word_packet(s):
     word_length = int.from_bytes(s.recv(2), byteorder='big')  # Receive the word length
+    skip = s.recv(1)
     word_packet = s.recv(word_length)  # Receive the word packet based on the length received
-    return word_packet
-
+    decodedwordpacket = word_packet.decode('utf-8')
+    print(decodedwordpacket)
+    return decodedwordpacket
 
 
 
@@ -56,18 +60,18 @@ def main():
             print("Port has to be an integer!!!!!")
             return
     else:
-        port = 18008 #Defaulting the port
+	port = 18008 #Defaulting the port
     try:
         with socket.socket() as s:
             s.connect((host, port))
             while True:
                 word_data = receive_word_packet(s)
                 send_nickname(s)
-                try:
-                    decoded_data = word_data.decode('utf-8')  # Decode the received data
-                    print(f'Word Packet: {decoded_data}')
-                except UnicodeDecodeError:
-                    print('Unable to decode the received data')
+                #try:
+                #    decoded_data = word_data.decode('utf-8')  # Decode the received data
+                #    print(f'Word Packet: {decoded_data}')
+                #except UnicodeDecodeError:
+                #    print('Unable to decode the received data')
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt:Program Terminated")
@@ -75,6 +79,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
