@@ -152,19 +152,19 @@ void storeNickname(char filename[], char dateAndTime[], char clientIP[], char ni
 			if (strcmp(clientIPAddress, clientIP) != 0)
 			{
 				// Write dateTime to the new file
-				for (int i = 0; i < strlen(dateTime); i++)
+				for (size_t i = 0; i < strlen(dateTime); i++)
 				{ putc(dateTime[i], tempfp); }
 			
 				putc(',', tempfp);         							// Add comma separation
 			
 				// Write clientIP to the new file
-				for (int i = 0; i < strlen(clientIPAddress); i++)
+				for (size_t i = 0; i < strlen(clientIPAddress); i++)
 				{ putc(clientIPAddress[i], tempfp); }
 			
 				putc(',', tempfp);         							// Add comma separation
 			
 				// Write client nickname to the new file
-				for (int i = 0; i < strlen(clientNickname); i++)
+				for (size_t i = 0; i < strlen(clientNickname); i++)
 				{ putc(clientNickname[i], tempfp); }
 			
 				putc('\n', tempfp);									// Add newLine
@@ -217,17 +217,17 @@ void writeToLogFile(char filename[], char timestamp[], char nick[], char msg[])
 	// Open the current log file. We will be appending to this file to store chat logs.
 	FILE* fp = fopen(filename, "a");                // Open the current log file for writing
 	
-	for (int i = 0; i < strlen(timestamp); i++)		// Write the timestamp to the log file
+	for (size_t i = 0; i < strlen(timestamp); i++)		// Write the timestamp to the log file
 	{ putc(timestamp[i], fp); }
 	
 	putc(',', fp);									// Comma separation
 	
-	for (int i = 0; i < strlen(nick); i++)			// Write the nickname to the log file
+	for (size_t i = 0; i < strlen(nick); i++)			// Write the nickname to the log file
 	{ putc(nick[i], fp); }
 	
 	putc(',', fp);									// Comma separation
 	
-	for (int i = 0; i < strlen(msg); i++)			// Write the message to the log file
+	for (size_t i = 0; i < strlen(msg); i++)			// Write the message to the log file
 	{ putc(msg[i], fp); }
 	
 	putc('\n', fp);									// Add newLine - this will separate log file entrires
