@@ -88,6 +88,8 @@ int isNicknameUnique(char filename[], char nickname[])
 
 
 // Notes: 1. 
+// Maximum dateAndTime length: 100
+// Maximum clientNickname: 100
 void storeNickname(char filename[], char dateAndTime[], char clientIP[], char nickname[])
 {
 	// Open the current nicknames file. We will be reading from this file to determine if the clientIP already has a nickname.
@@ -206,4 +208,33 @@ void storeNickname(char filename[], char dateAndTime[], char clientIP[], char ni
 
 
 // function to write: writeToLogFile
+// Parameters: filename  (byte string) - the log file, ex: logfile.txt
+//             timestamp (byte string)
+//             nickname  (byte string)
+//             msg       (byte string)
+void writeToLogFile(char filename[], char timestamp[], char nick[], char msg[])
+{
+	// Open the current log file. We will be appending to this file to store chat logs.
+	FILE* fp = fopen(filename, "a");                // Open the current log file for writing
+	
+	for (int i = 0; i < strlen(timestamp); i++)		// Write the timestamp to the log file
+	{ putc(timestamp[i], fp); }
+	
+	putc(',', fp);									// Comma separation
+	
+	for (int i = 0; i < strlen(nick); i++)			// Write the nickname to the log file
+	{ putc(nick[i], fp); }
+	
+	putc(',', fp);									// Comma separation
+	
+	for (int i = 0; i < strlen(msg); i++)			// Write the message to the log file
+	{ putc(msg[i], fp); }
+	
+	putc('\n', fp);									// Add newLine - this will separate log file entrires
+}
+
+
+
 // function to write: outputLogFile
+
+
