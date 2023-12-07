@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # stdwp library: Standard Word Packet
 
 import socket
