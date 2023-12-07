@@ -13,7 +13,7 @@
 CFLAGS = -fPIC -Wall -Werror -Wextra -shared
 CC = gcc #c compiler
 
-all: server client stdchat.so
+all: server client stdchatf.so stdwp
 
 server: server.py
     cp server.py server
@@ -24,7 +24,7 @@ client: client.py
     chmod u+x client
 
 stdwp: stdwp.py
-    cp stdwp.py
+    cp stdwp.py stdwp
     chmod u+x stdwp
 
 
@@ -44,5 +44,4 @@ clean:
     rm -f stdwp
     rm -f *.o
     rm -f stdchatf.so
-
 
