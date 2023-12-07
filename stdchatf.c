@@ -179,17 +179,17 @@ void storeNickname(char filename[], char dateAndTime[], char clientIP[], char ni
 		// Now, we have an updated nicknames file with the current clientIP's nickname entry removed.
 		
 	// Write the client's new nickname entry to the file.
-	for (int i = 0; i < strlen(dateAndTime); i++)   // Write the date and time to the file
+	for (size_t i = 0; i < strlen(dateAndTime); i++)   // Write the date and time to the file
 	{ putc(dateAndTime[i], tempfp); }
 	
 	putc(',', tempfp);									// Add comma separation
 	
-	for (int i = 0; i < strlen(clientIP); i++)      // Write the client IP to the file
+	for (size_t i = 0; i < strlen(clientIP); i++)      // Write the client IP to the file
 	{ putc(clientIP[i], tempfp); }
 	
 	putc(',', tempfp);									// Add comma separation
 	
-	for (int i = 0; i < strlen(nickname); i++)		// Write the nickname to the file
+	for (size_t i = 0; i < strlen(nickname); i++)		// Write the nickname to the file
 	{ putc(nickname[i], tempfp); }
 	
 	putc('\n', tempfp);									// Add newLine - this will separate nickname entries.
