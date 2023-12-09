@@ -21,6 +21,10 @@
 ####################################################################
 import socket
 import sys
+import ctypes
+import os
+import stdwp
+stdchatf = ctypes.CDLL('./stdchatf.so')
 
 
 
@@ -34,9 +38,20 @@ def receive_word_packet(s):
 
 
 
+def recv_chat_msg(s):
+    while True:
+        chat_packet = s.recv(1024)
+        if not chat_packet:
+            break
+        chat_message = chat_packet.decode('utf-8')
+        print(f'Received: {chat_message}')
+
+
+
 def send_nickname(s):
     nickname = input("Please enter a nickname: ")
-    print("Welcome,", nickname)
+    if len(nickname) <=2 or len(nickname) >= 17:
+        input("Nickname can only be 3-17 characters long. Retry: ")
     #Get length of nickname
     nick_length = len(nickname)
     typemessage = b'c'
@@ -44,6 +59,39 @@ def send_nickname(s):
     nickname_bytes = bytes(nickname, 'utf-8')
     nicknamewordpacket = bytenick + typemessage + nickname_bytes
     s.sendall(nicknamewordpacket)
+
+    #Now do this but using create word packet function via stdwp 
+    #nickwp = stdwp.create_word_packet(nickname, 'c')
+    #s.sendall(nickwp)
+    return nickname
+
+
+
+def ready_or_retry(s,nickname):
+    ready_or_not = receive_word_packet(s)
+    if ready_or_not == "READY":
+        print(f'Welcome, {nickname} ')
+        chat = input(f'Please enter a chat message, {nickname}: ')
+        chatlength = len(chat)
+        typechat = b't'
+        bytechat = chatlength.to_bytes(2, byteorder = 'big')
+        chatbytes = bytes(chat, 'utf-8')
+        chatwordpacket = bytechat + typechat + chatbytes
+        s.sendall(chatwordpacket)
+
+    elif ready_or_not == "RETRY":
+        newnick = input("This nickname is in use. Please Retry: ")
+        #Send it over to the client, type is t
+        if len(newnick) <=2 or len(newnick) >= 17:
+            input("Nickname can only be 3-17 characters long. Retry: ")
+        else:
+            print("Welcome,", newnick)
+        newnicklen = len(newnick)
+        type = b'c'
+        bytenewnick = newnicklen.to_bytes(2, byteorder = 'big')
+        newnickbytes = bytes(newnick, 'utf-8')
+        newnickwordpacket = bytenewnick + type + newnickbytes
+        s.sendall(newnickwordpacket)
 
 def main():
     if len(sys.argv) < 2:
@@ -64,18 +112,37 @@ def main():
     try:
         with socket.socket() as s:
             s.connect((host, port))
+#            pid = os.fork()
+            nickname_sent = False
             while True:
+
+#                if pid == 0:
+#                    recv_chat_msg(s)
+#                    os._exit(0)
                 word_data = receive_word_packet(s)
-                send_nickname(s)
-                #try:
-                #    decoded_data = word_data.decode('utf-8')  # Decode the received data
-                #    print(f'Word Packet: {decoded_data}')
-                #except UnicodeDecodeError:
-                #    print('Unable to decode the received data')
+                if not nickname_sent:
+                    nickname = send_nickname(s)
+                    nickname_sent = True
+
+                ready_or_retry(s,nickname)
+                while True:
+                    print("To quit the chat server, type '/quit'")
+                    newchatmsg = input(f"{nickname}'s chat message: ")
+                    if newchatmsg.lower() == '/quit':
+                        print("Sending BYE to the server...")
+                        bye = stdwp.create_word_packet("BYE", 'm')
+                        s.sendall(bye)
+                        s.close()
+                        exit()
+                    else:
+                        chatwrdpacket = stdwp.create_word_packet(newchatmsg, 't')
+                        s.sendall(chatwrdpacket)
+
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt:Program Terminated")
-
+    except Exception as e:
+        print(f'An error occurred: {e}')
 
 if __name__ == '__main__':
     main()
