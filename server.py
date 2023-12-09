@@ -60,8 +60,8 @@ if __name__ == "__main__":
                         if length == 0:
                             break
                         skip = readPackets(conn, 1)
-                        nickname = readPackets(conn, length)
-
+                        nickname = readPackets(conn, int.from_bytes(length, byteorder='big'))
+                        print(nickname);
                         isUnique = stdchatf.isNicknameUnique(b"nicknames.txt", nickname)
                         if isUnique == 0:
                             retry = stdwp.create_word_packet("RETRY", 'm')
@@ -71,9 +71,10 @@ if __name__ == "__main__":
                     currtime = datetime.now()
                     isoformatted = currtime.isoformat()
                     isobytes = isoformatted.encode('utf-8')
-                    stdchatf.storeNickname(b"nicknames.txt", b"ABC", clientIP.encode('utf-8'), nickname)
+                    stdchatf.storeNickname(b"nicknames.txt", datetime.now().encode('utf-8'), clientIP.encode('utf-8'), nickname)
                     ready = stdwp.create_word_packet("READY", 'm')
                     conn.sendall(ready)
+                    print("Past")
 
                     chat = ""
                     type = ""
@@ -92,18 +93,16 @@ if __name__ == "__main__":
                                 nickname = command_parts[1].encode('utf-8')
                                 isUnique = stdchatf.isNicknameUnique(b'nicknames.txt', nickname)
                                 while isUnique == 0:
-                                    stdchat.storeNickname(b"nicknames.txt", b"ABC", clientIP.encode('utp+8'), nickname)
+                                    stdchat.storeNickname(b"nicknames.txt", datetime.now().encode('utf-8'), clientIP.encode('utp+8'), nickname)
                                     conn.sendall(ready)
                                 else:
                                     retry = stdwp.create_word_packet("RETRY", 'm')
                                     conn.sendall(retry)
                     #zaynin's code for putting into log file
-#                        else:
-                         #   writeToLogFile(logfile, datetime.now().encode('utf+8'), nickname, chat)
+                        else:
+                            writeToLogFile(logfile, datetime.now().encode('utf+8'), nickname, chat)
     except OSError as e:
         exit(f'{e}')
     except KeyboardInterrupt:
         print("DONE")
-
-
-
+                    
