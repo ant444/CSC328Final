@@ -2,6 +2,7 @@
 # stdwp library: Standard Word Packet
 
 import socket
+import os
 
 
 # Parameter 1: message: a string
@@ -58,4 +59,47 @@ def is_command(userChatMsg):
             return False
     else:
         raise TypeError("Invalid parameter type passed into is_command(). Type required: string of length >= 1")
+        
+        
+# Parameter 1: The file name of the log file (ex: logfile.txt)
+def get_most_recent_chat_log(filename):
+    with open(filename, 'rb') as file:           # "with" will automatically close the file after this block is ended. opens as read in "b" for binary, so you can see newlines.
+        try:
+            file.seek(-2, os.SEEK_END)           # set the file cursor to the 2nd last byte of the file (starting from os.SEEK_END, byte -2)
+            while file.read(1) != b'\n':         # keep reading 1 byte at a time, backwards, until you hit a newline.
+                file.seek(-2, os.SEEK_CUR)          # Need to read backwards 2 bytes, since you read 1 forwards for every iteration of the while loop.
+        except OSError:
+            file.seek(0)
+        last_line = file.readline().decode()        # now that you are at the start of the last line, read in the entire line.
+    return last_line
 
+
+# Takes in a log file entry as a parameter. A log file entry is one line from the log file, ideally obtained through calling readline().
+# A log file entry is formatted as follows: <timestamp>,<nickname>,<message>
+# The log file entry will be formatted to look prettier as follows:
+# (Timestamp) nickname: message
+# Example:
+# (2023-12-09T22:23:00) Joe: hi 
+def format_logfile_entry(log_file_entry):
+    formatted_log_file_entry = "("
+    
+    string_index = 0
+    while (log_file_entry[string_index] != ','):                        # Iterate through the log file entry until you reach the first ","
+        formatted_log_file_entry += log_file_entry[string_index]        # Append the timestamp to the formatted_log_file_entry
+        string_index += 1
+        
+    string_index += 1                                                   # Skip the ","
+    formatted_log_file_entry += ") "
+        
+    while (log_file_entry[string_index] != ','):                        # Iterate through the log file entry until you reach the second ","
+        formatted_log_file_entry += log_file_entry[string_index]        # Append the nickname to the formatted_log_file_entry
+        string_index += 1
+        
+    string_index += 1                                                   # Skip the ","
+    formatted_log_file_entry += ": "
+    
+    while (string_index < len(log_file_entry)):                         # Append the entire message
+        formatted_log_file_entry += log_file_entry[string_index]
+        string_index += 1
+        
+    return formatted_log_file_entry
