@@ -24,6 +24,7 @@ import sys
 import ctypes
 import os
 import stdwp
+from multiprocessing import Process, Pipe
 stdchatf = ctypes.CDLL('./stdchatf.so')
 
 
@@ -33,7 +34,7 @@ def receive_word_packet(s):
     skip = s.recv(1)
     word_packet = s.recv(word_length)  # Receive the word packet based on the length received
     decodedwordpacket = word_packet.decode('utf-8')
-    print(decodedwordpacket)
+    #print(decodedwordpacket)
     return decodedwordpacket
 
 
@@ -108,26 +109,43 @@ def main():
             print("Port has to be an integer!!!!!")
             return
     else:
-	port = 18008 #Defaulting the port
+        port = 18008 #Defaulting the port
     try:
         with socket.socket() as s:
             s.connect((host, port))
 #            pid = os.fork()
             nickname_sent = False
-            while True:
+            #while True:
 
 #                if pid == 0:
 #                    recv_chat_msg(s)
 #                    os._exit(0)
-                word_data = receive_word_packet(s)
-                if not nickname_sent:
-                    nickname = send_nickname(s)
-                    nickname_sent = True
+            word_data = receive_word_packet(s)
+            if not nickname_sent:
+                nickname = send_nickname(s)
+                nickname_sent = True
 
-                ready_or_retry(s,nickname)
+            ready_or_retry(s,nickname)
+            
+            # Zaynin's Code: forking
+            child_pid = os.fork()
+            #parent_conn, child_conn = Pipe()          # create pipes to communicate between parent and child
+            
+            if child_pid == 0:
+                # This code is in the child process
+                
+                # RECEIVE WORD PACKETS FROM SERVER - updates chats from all clients in real time
                 while True:
-                    print("To quit the chat server, type '/quit'")
-                    newchatmsg = input(f"{nickname}'s chat message: ")
+                    word_data = receive_word_packet(s)
+                    print(word_data)
+                
+            else:
+                # This code is in the parent process
+                
+                # RECEIVE CHAT MESSAGES FROM USER
+                while True:
+                    #print("To quit the chat server, type '/quit'")
+                    newchatmsg = input() #(f"{nickname}'s chat message: ") - weird output when this is uncommented
                     if newchatmsg.lower() == '/quit':
                         print("Sending BYE to the server...")
                         bye = stdwp.create_word_packet("BYE", 'm')
@@ -146,7 +164,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
