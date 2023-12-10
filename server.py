@@ -111,9 +111,21 @@ if __name__ == "__main__":
                             print("Made it to log file stuff.")
                             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             stdchatf.writeToLogFile(b"logfile.txt", current_time.encode('utf+8'), nickname, chat.encode())
+                            
+                            # Zaynin's code:
+                            # EVERY TIME YOU GET A CHAT MESSAGE FROM A CLIENT AND STORE IT IN THE LOG FILE, SEND THAT MESSAGE TO ALL CLIENTS
+                            # send back to client as a formatted log file message
+                            with open("logfile.txt", "r") as file:
+                                # Read all lines into a list
+                                lines = file.readlines()
+
+                                # Get the last line
+                                last_line = lines[-1]
+                            # Send most recent chat message to all clients
+                            formatted_sendback_wp = stdwp.format_logfile_entry(last_line)
+                            sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")     
+                            conn.sendall(sendback_wp)
     except OSError as e:
         exit(f'{e}')
     except KeyboardInterrupt:
         print("DONE")
-
-
