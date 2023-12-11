@@ -50,49 +50,49 @@ def recv_chat_msg(s):
 
 
 def send_nickname(s):
-    nickname = input("Please enter a nickname: ")
-    if len(nickname) <=2 or len(nickname) >= 17:
-        input("Nickname can only be 3-17 characters long. Retry: ")
-    #Get length of nickname
-    nick_length = len(nickname)
-    typemessage = b'c'
-    bytenick = nick_length.to_bytes(2, byteorder = 'big')
-    nickname_bytes = bytes(nickname, 'utf-8')
-    nicknamewordpacket = bytenick + typemessage + nickname_bytes
-    s.sendall(nicknamewordpacket)
-
-    #Now do this but using create word packet function via stdwp 
-    #nickwp = stdwp.create_word_packet(nickname, 'c')
-    #s.sendall(nickwp)
-    return nickname
-
-
+    while True:
+        nickname = input("Please enter a nickname: ")
+        if 2 < len(nickname) < 17:
+            nick_length = len(nickname)
+            typemessage = b'c'
+            bytenick = nick_length.to_bytes(2, byteorder = 'big')
+            nickname_bytes = bytes(nickname, 'utf-8')
+            nicknamewordpacket = bytenick + typemessage + nickname_bytes
+            s.sendall(nicknamewordpacket)
+            return nickname
+        else:
+            print("Nickname should be 3-16 characters long. Retry:")
 
 def ready_or_retry(s,nickname):
-    ready_or_not = receive_word_packet(s)
-    if ready_or_not == "READY":
-        print(f'Welcome, {nickname} ')
-        chat = input(f'Please enter a chat message, {nickname}: ')
-        chatlength = len(chat)
-        typechat = b't'
-        bytechat = chatlength.to_bytes(2, byteorder = 'big')
-        chatbytes = bytes(chat, 'utf-8')
-        chatwordpacket = bytechat + typechat + chatbytes
-        s.sendall(chatwordpacket)
-
-    elif ready_or_not == "RETRY":
-        newnick = input("This nickname is in use. Please Retry: ")
-        #Send it over to the client, type is t
-        if len(newnick) <=2 or len(newnick) >= 17:
-            input("Nickname can only be 3-17 characters long. Retry: ")
-        else:
-            print("Welcome,", newnick)
-        newnicklen = len(newnick)
-        type = b'c'
-        bytenewnick = newnicklen.to_bytes(2, byteorder = 'big')
-        newnickbytes = bytes(newnick, 'utf-8')
-        newnickwordpacket = bytenewnick + type + newnickbytes
-        s.sendall(newnickwordpacket)
+    while True:
+        ready_or_not = receive_word_packet(s)
+        if ready_or_not == "READY":
+            print(f'Welcome, {nickname} ')
+            chat = input(f'Please enter a chat message, {nickname}: ')
+            chatlength = len(chat)
+            typechat = b't'
+            bytechat = chatlength.to_bytes(2, byteorder = 'big')
+            chatbytes = bytes(chat, 'utf-8')
+            chatwordpacket = bytechat + typechat + chatbytes
+            s.sendall(chatwordpacket)
+            break
+        elif ready_or_not == "RETRY":
+            while True:
+                newnick = input("This nickname is in use. Please Retry: ")
+                #Send it over to the client, type is t
+                if 2 < len(newnick) < 17 and newnick != nickname:
+                    print("Welcome, ", newnick)
+                    send_nickname(s, newnick)
+                    nickname = newnick
+                    break
+                else:
+                    print("Nickname can only be 3-17 characters long. Retry:")
+                    newnicklen = len(newnick)
+                    type = b'c'
+                    bytenewnick = newnicklen.to_bytes(2, byteorder = 'big')
+                    newnickbytes = bytes(newnick, 'utf-8')
+                    newnickwordpacket = bytenewnick + type + newnickbytes
+                    s.sendall(newnickwordpacket)
 
 def main():
     if len(sys.argv) < 2:
@@ -109,39 +109,34 @@ def main():
             print("Port has to be an integer!!!!!")
             return
     else:
-        port = 18008 #Defaulting the port
+	port = 18008 #Defaulting the port
     try:
         with socket.socket() as s:
             s.connect((host, port))
 #            pid = os.fork()
             nickname_sent = False
-            #while True:
-
-#                if pid == 0:
-#                    recv_chat_msg(s)
-#                    os._exit(0)
             word_data = receive_word_packet(s)
             if not nickname_sent:
                 nickname = send_nickname(s)
                 nickname_sent = True
 
             ready_or_retry(s,nickname)
-            
+
             # Zaynin's Code: forking
             child_pid = os.fork()
             #parent_conn, child_conn = Pipe()          # create pipes to communicate between parent and child
-            
+
             if child_pid == 0:
                 # This code is in the child process
-                
+
                 # RECEIVE WORD PACKETS FROM SERVER - updates chats from all clients in real time
                 while True:
                     word_data = receive_word_packet(s)
                     print(word_data)
-                
+
             else:
                 # This code is in the parent process
-                
+
                 # RECEIVE CHAT MESSAGES FROM USER
                 while True:
                     #print("To quit the chat server, type '/quit'")
@@ -164,3 +159,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
