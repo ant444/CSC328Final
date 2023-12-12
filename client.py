@@ -24,7 +24,8 @@ import sys
 import ctypes
 import os
 import stdwp
-
+import select
+import multiprocessing
 stdchatf = ctypes.CDLL('./stdchatf.so')
 
 def child_process(s, pout):
@@ -105,6 +106,7 @@ def ready_or_retry(s, nickname):
 def main():
     global child_process_finished
 
+    child_process_finished = multiprocessing.Value('i', 0)
     if len(sys.argv) < 2:
         print('Usage: python script.py <host> <port>')
         return
@@ -148,31 +150,24 @@ def main():
                 os.close(cw)
                 pin = os.fdopen(pr, 'r')
                 pout = os.fdopen(pw, 'w')
-
-                data = pin.readline()
-                if data == "f":
-                    print("Goodbye.")
-                    exit()
-                else:
-                    print("Error in exiting.")
-                    exit()
-
-            while True:
-                if child_process_finished.value:
-                    print("Child process finished.")
-                    s.close()
-                    os._exit(0)
-
-                newchatmsg = input(f"{nickname}'s chat message: ")
-                if child_process_finished.value == 1 or newchatmsg.lower() == '/quit':
-                    print("Sending BYE to the server...")
-                    bye = stdwp.create_word_packet("BYE", 'c')
-                    s.sendall(bye)
-                    s.close()
-                    os._exit(0)
-                else:
-                    chatwrdpacket = stdwp.create_word_packet(newchatmsg, 't')
-                    s.sendall(chatwrdpacket)
+                while True:
+                    ready, _, _ = select.select([pin], [], [], 0.1)
+                    if pin in ready:
+                        data = pin.readline()
+                        if data == "f":
+                            print("Goodbye.")
+                            exit()
+                    if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
+                        newchatmsg = input(f"{nickname}'s chat message: ")
+                        if child_process_finished.value == 1 or newchatmsg.lower() == '/quit':
+                            print("Sending BYE to the server...")
+                            bye = stdwp.create_word_packet("BYE", 'c')
+                            s.sendall(bye)
+                            s.close()
+                            os._exit(0)
+                        else:
+                            chatwrdpacket = stdwp.create_word_packet(newchatmsg, 't')
+                            s.sendall(chatwrdpacket)
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt: Program Terminated")
@@ -181,6 +176,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
