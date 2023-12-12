@@ -75,7 +75,7 @@ def get_most_recent_chat_log(filename):
 
 
 # Takes in a log file entry as a parameter. A log file entry is one line from the log file, ideally obtained through calling readline().
-# A log file entry is formatted as follows: <timestamp>,<nickname>,<message>
+# A log file entry is formatted as follows: <timestamp>~<nickname>~<message>
 # The log file entry will be formatted to look prettier as follows:
 # (Timestamp) nickname: message
 # Example:
@@ -84,18 +84,18 @@ def format_logfile_entry(log_file_entry):
     formatted_log_file_entry = "("
     
     string_index = 0
-    while (log_file_entry[string_index] != ','):                        # Iterate through the log file entry until you reach the first ","
+    while (log_file_entry[string_index] != '~'):                        # Iterate through the log file entry until you reach the first "~"
         formatted_log_file_entry += log_file_entry[string_index]        # Append the timestamp to the formatted_log_file_entry
         string_index += 1
         
     string_index += 1                                                   # Skip the ","
     formatted_log_file_entry += ") "
         
-    while (log_file_entry[string_index] != ','):                        # Iterate through the log file entry until you reach the second ","
+    while (log_file_entry[string_index] != '~'):                        # Iterate through the log file entry until you reach the second "~"
         formatted_log_file_entry += log_file_entry[string_index]        # Append the nickname to the formatted_log_file_entry
         string_index += 1
         
-    string_index += 1                                                   # Skip the ","
+    string_index += 1                                                   # Skip the "~"
     formatted_log_file_entry += ": "
     
     while (string_index < len(log_file_entry)):                         # Append the entire message
@@ -103,3 +103,5 @@ def format_logfile_entry(log_file_entry):
         string_index += 1
         
     return formatted_log_file_entry
+    
+    
