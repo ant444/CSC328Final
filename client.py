@@ -19,6 +19,7 @@
 #       You have the choice to make this push-based or pull-based.
 #
 ####################################################################
+
 import socket
 import sys
 import ctypes
@@ -45,12 +46,15 @@ def recv_chat_msg(s):
         if not chat_packet:
             break
         chat_message = chat_packet.decode('utf-8')
+#        if chat_message == "1":
+#            s.close()
+#            exit()
         print(f'Received: {chat_message}')
 
 
 
 def send_nickname(s):
-    while True:
+	while True:
         nickname = input("Please enter a nickname: ")
         if 2 < len(nickname) < 17:
             nick_length = len(nickname)
@@ -69,7 +73,7 @@ def ready_or_retry(s,nickname):
         if ready_or_not == "READY":
             print(f'Welcome, {nickname} ')
             chat = input(f'Please enter a chat message, {nickname}: ')
-            chatlength = len(chat)
+	    chatlength = len(chat)
             typechat = b't'
             bytechat = chatlength.to_bytes(2, byteorder = 'big')
             chatbytes = bytes(chat, 'utf-8')
@@ -88,7 +92,7 @@ def ready_or_retry(s,nickname):
                 else:
                     print("Nickname can only be 3-17 characters long. Retry:")
                     newnicklen = len(newnick)
-                    type = b'c'
+		    type = b'c'
                     bytenewnick = newnicklen.to_bytes(2, byteorder = 'big')
                     newnickbytes = bytes(newnick, 'utf-8')
                     newnickwordpacket = bytenewnick + type + newnickbytes
@@ -107,9 +111,9 @@ def main():
             port = int(sys.argv[2])
         except ValueError:
             print("Port has to be an integer!!!!!")
-            return
+	    return
     else:
-	port = 18008 #Defaulting the port
+        port = 18008 #Defaulting the port
     try:
         with socket.socket() as s:
             s.connect((host, port))
@@ -125,25 +129,31 @@ def main():
             # Zaynin's Code: forking
             child_pid = os.fork()
             #parent_conn, child_conn = Pipe()          # create pipes to communicate between parent and child
-
-            if child_pid == 0:
+	    if child_pid == 0:
                 # This code is in the child process
 
                 # RECEIVE WORD PACKETS FROM SERVER - updates chats from all clients in real time
                 while True:
                     word_data = receive_word_packet(s)
-                    print(word_data)
+                    if word_data == "1":
+                        print(word_data)
+                        s.close()
+                        exit()
+                    if(word_data == 'BYE'):
+                        s.close()
+                        exit()
+                    else:
+                        print(word_data)
 
             else:
                 # This code is in the parent process
-
-                # RECEIVE CHAT MESSAGES FROM USER
+		# RECEIVE CHAT MESSAGES FROM USER
                 while True:
                     #print("To quit the chat server, type '/quit'")
                     newchatmsg = input() #(f"{nickname}'s chat message: ") - weird output when this is uncommented
                     if newchatmsg.lower() == '/quit':
                         print("Sending BYE to the server...")
-                        bye = stdwp.create_word_packet("BYE", 'm')
+                        bye = stdwp.create_word_packet("BYE", 'c')
                         s.sendall(bye)
                         s.close()
                         exit()
@@ -159,7 +169,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
 
