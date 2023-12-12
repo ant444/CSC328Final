@@ -13,8 +13,11 @@
 ###################################################################
 
 
+import functools
 import socket
 import sys
+import signal
+import time
 from datetime import datetime
 
 
@@ -22,6 +25,23 @@ import ctypes
 import stdwp
 stdchatf = ctypes.CDLL('./stdchatf.so')
 
+def sigint_handler(conn, signal, frame):
+    try:
+        global s
+        print('Server will shut down in five seconds.')
+
+        x = 5
+        sending = stdwp.create_word_packet('Server will shut down in five seconds.', 'm')
+        conn.sendall(sending)
+        while x != 0:
+            conn.sendall(stdwp.create_word_packet(str(x), 'm'))
+            x = x-1
+            time.sleep(1)
+
+        conn.close()
+        sys.exit(0)
+    except Exception as e:
+        print(f'Error in sigint_handler: {e}')
 
 
 def readPackets(s, num):
@@ -32,8 +52,7 @@ def readPackets(s, num):
         if len(read) == 0: break
     print("READ")
     return bytes
-
-if __name__ == "__main__":
+    if __name__ == "__main__":
     if len(sys.argv) > 2:
         exit("Too many arguments.")
     try:
@@ -43,11 +62,16 @@ if __name__ == "__main__":
             portNum = int(sys.argv[1])
 
         with socket.socket() as s:
+#            signal.signal(signal.SIGINT, sigint_handler)
             s.bind(("",portNum))
-            s.listen(1)
+            s.listen(5)
             while True:
                 conn, addr = s.accept()
                 with conn:
+#                    signal.signal(signal.SIGINT, sigint_handler)
+                    #custom_param_value = 5  # Set your desired parameter value here
+                    sigint_handler_with_param = functools.partial(sigint_handler, conn)
+                    signal.signal(signal.SIGINT, sigint_handler_with_param)
                     clientIP = addr[0]
                     hello = stdwp.create_word_packet("HELLO", 'm')
                     conn.sendall(hello)
@@ -82,20 +106,21 @@ if __name__ == "__main__":
 
                     chat = " "
                     type = " "
-                    while(chat != "quit" and type != b'c'):
-                        print("GOTHERE3")
+                    while(chat != 'BYE' and type != 'c'):
+#                        print("GOTHERE3")
                         length = readPackets(conn, 2)
-                        print("GotHERE4")
                         wordPacket = length + readPackets(conn, int.from_bytes(length, byteorder='big') + 1)
                         print(wordPacket)
                         chat = stdwp.extract_word_packet_message(wordPacket)
-                        print(chat.encode())
+#                        print(chat.encode())
+                        #print(type.encode())
                         type = stdwp.get_word_packet_type(wordPacket)
-                        print("GOTHERE5")
+#                        print(type.encode())
+#                        print("GOTHERE5")
                         if length == 0:
                             break
 
-                        if type == b'c':
+                        if type == 'c':
                             command_parts = chat.split()
                             if command_parts[0] == "nick":
                                 nickname = command_parts[1].encode('utf-8')
@@ -111,7 +136,7 @@ if __name__ == "__main__":
                             print("Made it to log file stuff.")
                             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             stdchatf.writeToLogFile(b"logfile.txt", current_time.encode('utf+8'), nickname, chat.encode())
-                            
+
                             # Zaynin's code:
                             # EVERY TIME YOU GET A CHAT MESSAGE FROM A CLIENT AND STORE IT IN THE LOG FILE, SEND THAT MESSAGE TO ALL CLIENTS
                             # send back to client as a formatted log file message
@@ -121,10 +146,12 @@ if __name__ == "__main__":
 
                                 # Get the last line
                                 last_line = lines[-1]
-                            # Send most recent chat message to all clients
+                                # Send most recent chat message to all clients
                             formatted_sendback_wp = stdwp.format_logfile_entry(last_line)
-                            sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")     
+                            sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")
                             conn.sendall(sendback_wp)
+                    conn.sendall(stdwp.create_word_packet("BYE", "m"))
+                    conn.close()
     except OSError as e:
         exit(f'{e}')
     except KeyboardInterrupt:
