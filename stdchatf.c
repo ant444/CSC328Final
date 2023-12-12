@@ -45,7 +45,7 @@ int hasNickname(char filename[], char clientIP[])
 	// Otherwise, if the passed-in IP is not found in the file, then that client does not yet have a nickname. Return false (0).
 	while ((charFromFile = getc(fp)) != EOF)
 	{
-		while ((charFromFile = getc(fp)) != ',')										// Read in date and time
+		while ((charFromFile = getc(fp)) != '~')										// Read in date and time
 		{
 			if (ferror(fp))
 			{ 	perror("Error reading from file in stdchatf.storeNickname().\n");
@@ -53,7 +53,7 @@ int hasNickname(char filename[], char clientIP[])
 			}
 		}
 
-		while ((charFromFile = getc(fp)) != ',')										// Read in IP
+		while ((charFromFile = getc(fp)) != '~')										// Read in IP
 		{
 			if (ferror(fp))
 			{ 	perror("Error reading from file in stdchatf.storeNickname().\n");
@@ -62,6 +62,7 @@ int hasNickname(char filename[], char clientIP[])
 			ipFromFile[ipIndex] = charFromFile;
 			ipIndex++;
 		}
+		 ipFromFile[ipIndex] = '\0';
 
 		while ((charFromFile = getc(fp)) != '\n')										// Read in nickname
 		{
@@ -71,11 +72,14 @@ int hasNickname(char filename[], char clientIP[])
 			}
 		}
 		
+		printf("ipFromFile: %s\n", ipFromFile);
+		printf("clientIP: %s\n", clientIP);
 		if (strcmp(ipFromFile, clientIP) == 0)											// If this specific IP is equal to the passed-in IP,
 		{ return 1; }																	// then the client already has a nickname. Return true (1).
 		
-		ipIndex = 0;
-		memset(ipFromFile, 0, sizeof(ipFromFile));										// Reset ipFromFile
+		ipIndex = 0;							
+		memset(ipFromFile, 0, ipIndex);													// Reset ipFromFile (up until the null terminator,
+																						// overriding null terminator with "0" causes garbage chars.
 		
 		// Repeat this process until you go through every IP address in the nicknames storage file.
 	}
@@ -114,7 +118,7 @@ int isNicknameUnique(char filename[], char nickname[])
 	// Otherwise, if the nickname is not found, then it is unique and return true.
 	while ((charFromFile = getc(fp)) != EOF)
 	{
-		while ((charFromFile = getc(fp)) != ',') 					// Read in date and time
+		while ((charFromFile = getc(fp)) != '~') 					// Read in date and time
 		{
 			if (ferror(fp))
 			{ 	perror("Error reading from file in stdchatf.storeNickname().\n");
@@ -122,7 +126,7 @@ int isNicknameUnique(char filename[], char nickname[])
 			}
 		}					
 
-		while ((charFromFile = getc(fp)) != ',')					// Read in IP
+		while ((charFromFile = getc(fp)) != '~')					// Read in IP
 		{
 			if (ferror(fp))
 			{ 	perror("Error reading from file in stdchatf.storeNickname().\n");
@@ -160,7 +164,7 @@ int isNicknameUnique(char filename[], char nickname[])
 
 // Function Name: storeNickname
 // Description:  Will store an entry into a nicknames storage file. The nickname entry will be
-//               formatted as follows: <date and time>,<client IP>,<nickname>
+//               formatted as follows: <date and time>~<client IP>~<nickname>
 //               If a client IP already has a nickname stored in this nicknames storage file, then
 //               their previous entry will be overwritten with the new time and nickname.
 // Parameters:   char filename[]    : a char array (byte string) of the name of the file, example: "nicknames.txt" - input
@@ -205,7 +209,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 			dateTime[0] = charFromFile;   // store the first char in the dateTime
 			// Read up until the first ",". Now we are at the clientIP.
 			int dateAndTimeIndex = 1;
-			while ((charFromFile = getc(fp)) != ',')
+			while ((charFromFile = getc(fp)) != '~')
 			{
 				if (ferror(fp))
 				{ perror("Error reading from file in stdchatf.storeNickname().\n");
@@ -216,7 +220,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 			
 			// Now, read in the clientIP.
 			int clientIPAddressIndex = 0;
-			while ((charFromFile = getc(fp)) != ',')
+			while ((charFromFile = getc(fp)) != '~')
 			{
 				if (ferror(fp))
 				{ perror("Error reading from file in stdchatf.storeNickname().\n");
@@ -250,7 +254,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 					}
 				}
 			
-				if (putc(',', tempfp) == EOF)											// Add comma separation
+				if (putc('~', tempfp) == EOF)											// Add tilde separation
 				{
 					perror("Error using putc() in strchatf.storeNickname().\n");
 					return -1;
@@ -266,7 +270,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 					}
 				}
 			
-				if (putc(',', tempfp) == EOF)											// Add comma separation
+				if (putc('~', tempfp) == EOF)											// Add tilde separation
 				{
 					perror("Error using putc() in strchatf.storeNickname().\n"); 
 					return -1;
@@ -307,7 +311,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 		}
 	}
 	
-	if (putc(',', tempfp) == EOF)									// Add comma separation
+	if (putc('~', tempfp) == EOF)									// Add tilde separation
 	{
 		perror("Error using putc() in strchatf.storeNickname().\n");
 		return -1;
@@ -322,7 +326,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 		}
 	}
 	
-	if (putc(',', tempfp) == EOF)									// Add comma separation
+	if (putc('~', tempfp) == EOF)									// Add tilde separation
 	{
 		perror("Error using putc() in strchatf.storeNickname().\n");
 		return -1;
@@ -362,7 +366,7 @@ int storeNickname(char filename[], char dateAndTime[], char clientIP[], char nic
 
 // Function Name: writeToLogFile
 // Description:  Will write a chat message log entry into a passed-in log file.
-//               Log message chat entries are formatted as follows: <timestamp>,<nickname>,<msg>
+//               Log message chat entries are formatted as follows: <timestamp>~<nickname>~<msg>
 // Parameters:   char filename[]  : a char array (byte string) of the name of the file, example: "logfile.txt" - input
 //               char timestamp[] : a char array (byte string) of the timestamp associated with chat message - input
 //               char nick[]      : a char array (byte string) of the nickname associated with chat message - input
@@ -382,7 +386,7 @@ int writeToLogFile(char filename[], char timestamp[], char nick[], char msg[])
 		{ return -1; }
 	}
 	
-	if (putc(',', fp) == EOF)							// Comma separation
+	if (putc('~', fp) == EOF)							// Tilde separation
 	{ return -1; }
 	
 	for (size_t i = 0; i < strlen(nick); i++)			// Write the nickname to the log file
@@ -391,7 +395,7 @@ int writeToLogFile(char filename[], char timestamp[], char nick[], char msg[])
 		{ return -1; }
 	}
 	
-	if (putc(',', fp) == EOF)							// Comma separation
+	if (putc('~', fp) == EOF)							// Tilde separation
 	{ return -1; }
 	
 	for (size_t i = 0; i < strlen(msg); i++)			// Write the message to the log file
@@ -407,3 +411,6 @@ int writeToLogFile(char filename[], char timestamp[], char nick[], char msg[])
 
 	return 0;											// writeToLogFile() succeeded.
 }
+
+
+
