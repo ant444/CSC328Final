@@ -60,8 +60,15 @@ def recv_chat_msg(s):
 
 def send_nickname(s):
     while True:
+        banned_chars = ['~', ',', ' ', '.', '\'', '\'', '/']
+        containsBannedChar = False
         nickname = input("Please enter a nickname: ")
-        if 2 < len(nickname) < 17:
+        for char in banned_chars:
+            if char in nickname:
+                print("Your nickname contains a banned character. Banned characters: ~ , space, ., \', \". Retry:")
+                containsBannedChar = True
+                break
+        if 2 < len(nickname) < 17 and containsBannedChar == False:
             nick_length = len(nickname)
             typemessage = b'c'
             bytenick = nick_length.to_bytes(2, byteorder='big')
@@ -73,12 +80,22 @@ def send_nickname(s):
             print("Nickname should be 3-16 characters long. Retry:")
 
 def ready_or_retry(s, nickname):
+    containsBannedChatChar = False
     while True:
-        ready_or_not = receive_word_packet(s)
+        if containsBannedChatChar == False:
+            ready_or_not = receive_word_packet(s)
         if ready_or_not == "READY":
             print(f'Welcome, {nickname} ')
             chat = input(f'Please enter a chat message, {nickname}: ')
-            if chat == '/quit':
+            banned_chars = ['~']
+            containsBannedChatChar = False
+            for char in banned_chars:
+                if char in chat:
+                    containsBannedChatChar = True
+            if containsBannedChatChar == True:
+                print("Your chat messsage contains a banned character. Banned characters: \"~\" Retry:")
+                chat = input(f'Please enter a chat message, {nickname}: ')
+            elif chat == '/quit':
                 print("Sending BYE to the server.")
                 bye = stdwp.create_word_packet("BYE", 'm')
                 s.sendall(bye)
@@ -93,15 +110,20 @@ def ready_or_retry(s, nickname):
                 s.sendall(chatwordpacket)
                 break
         elif ready_or_not == "RETRY":
-            while True:
-                newnick = input("This nickname is in use. Please Retry: ")
-                if 2 < len(newnick) < 17 and newnick != nickname:
-                    print("Welcome, ", newnick)
-                    send_nickname(s, newnick)
-                    nickname = newnick
-                    break
-                else:
-                    print("Nickname can only be 3-17 characters long. Retry:")
+            #while True:
+            print("This nickname is in use. Please retry.")
+                #send_nickname(s)
+                
+                
+                #newnick = input("This nickname is in use. Please Retry: ")
+                #if 2 < len(newnick) < 17 and newnick != nickname:
+                #    print("Welcome, ", newnick)
+                #    #send_nickname(s, newnick)
+            nickname = send_nickname(s)
+                #    nickname = newnick
+                #    break
+                #else:
+                #    print("Nickname can only be 3-17 characters long. Retry:")
 
 def main():
     global child_process_finished
@@ -159,7 +181,14 @@ def main():
                             exit()
                     if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
                         newchatmsg = input(f"{nickname}'s chat message: ")
-                        if child_process_finished.value == 1 or newchatmsg.lower() == '/quit':
+                        banned_chars = ['~']
+                        containsBannedChatChar = False
+                        for char in banned_chars:
+                            if char in newchatmsg:
+                                containsBannedChatChar = True
+                        if containsBannedChatChar == True:
+                            print("Your chat messsage contains a banned character. Banned characters: \"~\" Retry:")
+                        elif child_process_finished.value == 1 or newchatmsg.lower() == '/quit':
                             print("Sending BYE to the server...")
                             bye = stdwp.create_word_packet("BYE", 'c')
                             s.sendall(bye)
@@ -176,7 +205,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
