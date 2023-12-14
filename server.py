@@ -38,11 +38,15 @@ def sigint_handler(conn, pid, child_receive, parent_receive, child_send, parent_
         if pid == 0 and sisterPid == 1:
             x = 5
             sending = stdwp.create_word_packet('Server will shut down in five seconds.', 'm')
-            conn.sendall(sending)
-            while x != 0:
-                conn.sendall(stdwp.create_word_packet(str(x), 'm'))
-                x = x-1
-                time.sleep(1)
+
+            try:
+                conn.sendall(sending)
+                while x != 0:
+                    conn.sendall(stdwp.create_word_packet(str(x), 'm'))
+                    x = x-1
+                    time.sleep(1)
+            except socket.error as e:
+                pass
 
         if pid != 0:
             print("Server is shutting down")
@@ -51,11 +55,16 @@ def sigint_handler(conn, pid, child_receive, parent_receive, child_send, parent_
                 print("Error given when exiting")
 
         if pid == 0:
-            conn.close()
-        child_receive.close()
-        parent_receive.close()
-        child_send.close()
-        parent_send.close()
+            try:
+                conn.close()
+            except socket.error as e:
+                print("socket closed")
+
+        if pid != 0:
+            child_receive.close()
+            parent_receive.close()
+            child_send.close()
+            parent_send.close()
         sys.exit(0)
     except Exception as e:
        print(f'Error in sigint_handler: {e}')
@@ -93,7 +102,7 @@ if __name__ == "__main__":
             sisterPid = 0
             procNumber = 0
             processes = []
-            
+
             #forks into different processes and makes pipes for each child, putting them into a list.
             for x in range(1,6):
                 try:
@@ -111,7 +120,7 @@ if __name__ == "__main__":
                     break
 
             connected = 0
-            
+
             while True:
                 #child process
                 if pid == 0:
@@ -125,13 +134,13 @@ if __name__ == "__main__":
                         #checks for keyboard interrupt
                         sigint_handler_with_param = functools.partial(sigint_handler, conn, pid, child_receive, parent_receive, child_send, parent_send)
                         signal.signal(signal.SIGINT, sigint_handler_with_param)
-
+    
 
                         clientIP = addr[0]
                         #says hello to client to confirm connection
                         hello = stdwp.create_word_packet("HELLO", 'm')
                         conn.sendall(hello)
-                        
+
                         #loop for asking for nickname and checking if nickname is unique
                         isUnique = 0
                         #while the nickname is not unique, keep sending retry, once it is leave loop.
@@ -141,16 +150,19 @@ if __name__ == "__main__":
                                 break
                             skip = readPackets(conn, 1)
                             nickname = readPackets(conn, int.from_bytes(length, byteorder='big'))
-                            print(nickname)
+#                            print(nickname)
                             isUnique = stdchatf.isNicknameUnique(b"nicknames.txt", nickname)
                             if isUnique == 0:
                                 retry = stdwp.create_word_packet("RETRY", 'm')
                                 print("Sent RETRY")
                                 conn.sendall(retry)
+                            elif isUnique == -1:
+                                print("something wrong")
                             else:
                                 #puts nickname into file
+#                                print(isUnique)
                                 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                stdchatf.storeNickname(b"nicknames.txt", current_time.encode('utf-8'), clientIP.encode('utf-8'), nickname)
+                                stdchatf.storeNickname(b'nicknames.txt', current_time.encode('utf-8'), clientIP.encode('utf-8'), nickname)
 
 
                                 ready = stdwp.create_word_packet("READY", 'm')
@@ -182,13 +194,13 @@ if __name__ == "__main__":
                                 wordPacket = length + readPackets(conn, int.from_bytes(length, byteorder='big') + 1)
                                 #print(wordPacket)
                                 chat = stdwp.extract_word_packet_message(wordPacket)
-                                print("chat sent: "+str(chat))
+#                                print("chat sent: "+str(chat))
                                 type = stdwp.get_word_packet_type(wordPacket)
 
                                 if length == 0:
                                     break
-                                    
-                                #changes nickname if requested (not implemented in client yet)
+
+                                #changes nickname if requested (not going to be implemented in client, ran out of time)
                                 if type == 'c':
                                     command_parts = chat.split()
                                     if command_parts[0] == "nick":
@@ -204,7 +216,7 @@ if __name__ == "__main__":
                                 else:
                                     #sends chats to parent proc
                                     try:
-                                        print("sending chats")
+#                                        print("sending chats")
 #                                        print("procNumber: "+str(procNumber))
                                         processes[procNumber][1].send(nickname)
                                         processes[procNumber][1].send(chat)
@@ -220,11 +232,11 @@ if __name__ == "__main__":
                                 signal.signal(signal.SIGINT, sigint_handler_with_param)
                                 #will receive chat that was sent from the parent after it is put into log file. Then it will broadcast to all clients.
                                 try:
-                                    if child_receive.poll(timeout=1000):
-                                        print("detected data")
-                                        print(os.getpid())
+                                    if processes[procNumber][0].poll(timeout=1000):
+#                                        print("detected data")
+#                                        print(os.getpid())
                                         data = processes[procNumber][0].recv()
-                                        print("read data")
+#                                        print("read data")
                                         conn.sendall(data)
                                 except BrokenPipeError:
                                     print("Pipe is closed")
@@ -258,21 +270,24 @@ if __name__ == "__main__":
                 else:
                     #number of connections (plus 1)
                     conn = 1
-
+                    check = 0
                     try:
                         while(True):
 
+                            if check == conn:
+                                check = 0
+
                             if connections_receive.poll():
                                 data = connections_receive.recv()
-                                print(data)
+#                                print(data)
 #                                time.sleep(1)
                                 conn = conn + 1
 
                             #if first client sends something, read it then send chat to all clients
-                            if processes[0][2].poll():
-                                print("in pipe")
-                                nickname = processes[0][2].recv()
-                                chat = processes[0][2].recv()
+                            if processes[check][2].poll():
+#                                print("in pipe")
+                                nickname = processes[check][2].recv()
+                                chat = processes[check][2].recv()
                                 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                                 stdchatf.writeToLogFile(b"logfile.txt", current_time.encode('utf+8'), nickname, chat.encode())
 
@@ -287,33 +302,35 @@ if __name__ == "__main__":
                                 sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")
 
                                 #sends recent chat to all clients
-                                print("about to send")
-                                print(sendback_wp)
+#                                print("about to send")
+#                                print(sendback_wp)
                                 for p in range(0, conn):
                                     processes[p][3].send(sendback_wp)
-                                print("sent")
+#                                print("sent")
 
                             #if second client sends something
-                            if processes[1][2].poll():
-                                nickname = processes[1][2].recv()
-                                chat = processes[1][2].recv()
-                                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                stdchatf.writeToLogFile(b"logfile.txt", current_time.encode('utf+8'), nickname, chat.encode())
-                                with open("logfile.txt") as file:
-                                    lines = file.readlines()
-                                last_line = lines[-1]
-                                formatted_sendback_wp = stdwp.format_logfile_entry(last_line)
-                                sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")
-                                print("about to send")
-                                print(sendback_wp)
-                                for p in range(0, conn-1):
-                                    processes[p][3].send(sendback_wp)
-                                print("sent")
+#                            if processes[1][2].poll():
+#                                nickname = processes[1][2].recv()
+#                                chat = processes[1][2].recv()
+#                                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#                                stdchatf.writeToLogFile(b"logfile.txt", current_time.encode('utf+8'), nickname, chat.encode())
+#                                with open("logfile.txt") as file:
+#                                    lines = file.readlines()
+#                                last_line = lines[-1]
+#                                formatted_sendback_wp = stdwp.format_logfile_entry(last_line)
+#                                sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")
+#                                print("about to send")
+#                                print(sendback_wp)
+#                                for p in range(0, conn):
+#                                    processes[p][3].send(sendback_wp)
+#                                print("sent")
 
                    #must implement more. will do soon but it works with two clients, just need to either hardcode 3 more or do a for loop or something.
 
                             sigint_handler_with_param = functools.partial(sigint_handler, conn, pid, child_receive, parent_receive, child_send, parent_send)
                             signal.signal(signal.SIGINT, sigint_handler_with_param)
+
+                            check += 1
 
                     except Exception as e:
                         print(f"exception sending {e}")
@@ -321,4 +338,4 @@ if __name__ == "__main__":
     except OSError as e:
         exit(f'{e}')
     except KeyboardInterrupt:
-        x = 0
+        pass
