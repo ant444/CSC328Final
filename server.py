@@ -85,7 +85,9 @@ def sigint_handler(conn, pid, child_receive, parent_receive, child_send, parent_
 ##
 # Function name: readPackets
 # Description: gives the ability to read packets received from the server
-# Parameters: 
+# Parameters: s: the socket - input
+# num: the number of bytes to be read - input
+# return value: bytesstring bytes: what is sent through the socket 
 ##
 def readPackets(s, num):
     bytes = b''
@@ -325,24 +327,6 @@ if __name__ == "__main__":
                                     processes[p][3].send(sendback_wp)
 #                                print("sent")
 
-                            #if second client sends something
-#                            if processes[1][2].poll():
-#                                nickname = processes[1][2].recv()
-#                                chat = processes[1][2].recv()
-#                                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#                                stdchatf.writeToLogFile(b"logfile.txt", current_time.encode('utf+8'), nickname, chat.encode())
-#                                with open("logfile.txt") as file:
-#                                    lines = file.readlines()
-#                                last_line = lines[-1]
-#                                formatted_sendback_wp = stdwp.format_logfile_entry(last_line)
-#                                sendback_wp = stdwp.create_word_packet(formatted_sendback_wp, "l")
-#                                print("about to send")
-#                                print(sendback_wp)
-#                                for p in range(0, conn):
-#                                    processes[p][3].send(sendback_wp)
-#                                print("sent")
-
-                   #must implement more. will do soon but it works with two clients, just need to either hardcode 3 more or do a for loop or something.
 
                             sigint_handler_with_param = functools.partial(sigint_handler, conn, pid, child_receive, parent_receive, child_send, parent_send)
                             signal.signal(signal.SIGINT, sigint_handler_with_param)
