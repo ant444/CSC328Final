@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # stdwp library: Standard Word Packet
 
+# Author: Zaynin Henthorn
+# Major: Computer Science
+# Course: CSC 328 Fall 2023
+# Assignment: Final Group Project - Chat Server
+# Purpose: The stdwp (standard word packet) library, contains functions pertaining to word packets
+# and retreival from files.
+
 import socket
 import os
 
