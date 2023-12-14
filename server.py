@@ -31,6 +31,18 @@ stdchatf = ctypes.CDLL('./stdchatf.so')
 
 global sisterPid
 
+##
+# Function name: sigint_handler
+# Description: ensures that the server will shut down gracefully, sends a countdown to all the clients that it will be shutting down. Closes all sockets and pipes.
+# Parameters: conn: if child, will be the socket connected to client. If parent will be number. - input
+# pid: the process id set from a fork of the process currently running - input
+# child_receive: the receive pipe for the child - input
+# parent_receive: the receive pipe for the parent - input
+# child_send: the send pipe for the child - input
+# parent_send: the send pipe for the parent - input
+# signal: needed for sigint_handler - input
+# frame: needed for sigint_handler - input
+##
 def sigint_handler(conn, pid, child_receive, parent_receive, child_send, parent_send, signal, frame):
     try:
         global s
@@ -70,6 +82,11 @@ def sigint_handler(conn, pid, child_receive, parent_receive, child_send, parent_
        print(f'Error in sigint_handler: {e}')
 
 
+##
+# Function name: readPackets
+# Description: gives the ability to read packets received from the server
+# Parameters: 
+##
 def readPackets(s, num):
     bytes = b''
     while len(bytes) != num:
