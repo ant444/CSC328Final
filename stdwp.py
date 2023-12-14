@@ -11,9 +11,15 @@
 import socket
 import os
 
-
-# Parameter 1: message: a string
-# Parameter 2: type: a char
+# Function name: create_word_packet
+# Description: Creates a word packet in the following format:
+#              - First two bytes are the size of the message, in hexadecimal, big endian
+#              - Third byte is a char, representing the type of the word packet.
+#              - Remaining bytes are each character of the message.
+#              - The size stored in the first two bytes does not include the type.
+# Parameters:  string message   : the message to be stored in the word packet - input
+#              char/string type : the type of the word packet - input
+# Return value: the created word packet, otherwise error
 def create_word_packet(message, type):
     if isinstance(message, str) and isinstance(type, str) and len(type) == 1:      # Ensure that you have two strings, and the type has length of 1.
         msg_length_be = len(message).to_bytes(2, 'big')                            # Get the message length in big endian, in two bytes.
@@ -32,8 +38,12 @@ def create_word_packet(message, type):
     return word_packet
 
 
-# Parameter 1: a word packet, which is a byte array.
-# Converts a byte array word packet into a python string of just the message contained inside the word packet.
+
+# Function name: extract_word_packet_message
+# Description: Returns the message portion of a word packet. For example, if
+#              you have a word packet: "00 05 t h e l l o", "hello" will be extracted.
+# Parameters: word_packet, a byte array. - the word packet to extract the message from - input
+# Return Value: string (python), extracted message. Otherwise error.
 def extract_word_packet_message(word_packet):
     # Word packet format: 00 05 t h e l l o
     if len(word_packet) >= 3:                                       # Make sure that the word packet has at least the two bytes for size and the type
@@ -44,8 +54,11 @@ def extract_word_packet_message(word_packet):
         raise TypeError("Invalid word packet parameter.")
     return py_msg
 
-# Parameter 1: a word packet, which is a byte array
-# Returns the type from the word packet. Example: Word Packet: 00 05 t h e l l o, returns 't'.
+
+# Function name: get_word_packet_type
+# Description: Returns the type from the word packet (as a char)
+# Parameters: word_packet, a byte array - the word packet to extract the type from - input
+# Return value: string/char (python), the type of the word packet (t, c, or m)
 def get_word_packet_type(word_packet):
     if len(word_packet) >= 3:                                       # Make sure that the word packet has at least the two bytes for size and the type
         byte_type = word_packet[2]                                  # Gets the type from the word packet, as a byte char. Is received as ASCII code
@@ -55,9 +68,11 @@ def get_word_packet_type(word_packet):
         else:
             raise TypeError("Invalid type extracted from word packet.")
 
-# Takes in a string (a chat from the user) as input. If their chat starts with "/", then they are attempting to send a command.
-# Otherwise, they are not attempting to send a command.
-# This is useful to determine what 'type' to create a word packet with.        
+
+# Function name: is_command
+# Description: Determines if a chat message is a command (if it starts with "/")
+# Parameters: userChatMsg, a python string - the user's chat message. - input
+# Return Value: True or False depending on whether or not the chat message is a command (starts with "/")
 def is_command(userChatMsg):
     if isinstance(userChatMsg, str) and len(userChatMsg) >= 1:      # Ensure that userChatMsg is a string of at least length 1
         if userChatMsg[0] == "/":
@@ -68,7 +83,11 @@ def is_command(userChatMsg):
         raise TypeError("Invalid parameter type passed into is_command(). Type required: string of length >= 1")
         
         
-# Parameter 1: The file name of the log file (ex: logfile.txt)
+
+# Function Name: get_most_recent_chat_log
+# Description: Returns the most recent chat log (bottom line from the log file)
+# Parameters: string (python) filename, the name of the log file. - input
+# Returns: String (python), the most recent chat log.
 def get_most_recent_chat_log(filename):
     with open(filename, 'rb') as file:           # "with" will automatically close the file after this block is ended. opens as read in "b" for binary, so you can see newlines.
         try:
@@ -87,6 +106,17 @@ def get_most_recent_chat_log(filename):
 # (Timestamp) nickname: message
 # Example:
 # (2023-12-09T22:23:00) Joe: hi 
+
+# Function name: format_logfile_entry
+# Desription: Formats a logfile entry (typically returned by get_most_recent_chat_log()
+#             into a more attractive format, typically before printing to a client's screen.
+#             A log file entry is formatted as follows: <timestamp>~<nickname>~<message>
+#             The log file entry will be formatted to look prettier as follows:
+#             (Timestamp) nickname: message
+#             Example:
+#             (2023-12-09T22:23:00) Joe: hi 
+# Parameters: python string, the log file entry - input
+# Return Value: python string, the formatted log file entry.
 def format_logfile_entry(log_file_entry):
     formatted_log_file_entry = "("
     
