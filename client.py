@@ -133,12 +133,8 @@ def send_nickname(s):
                 containsBannedChar = True
                 break
         if 2 < len(nickname) < 17 and containsBannedChar == False:  # make sure length is greater than2 and less than 16
-            nick_length = len(nickname)
-            typemessage = b'c'
-            bytenick = nick_length.to_bytes(2, byteorder='big')
-            nickname_bytes = bytes(nickname, 'utf-8')
-            nicknamewordpacket = bytenick + typemessage + nickname_bytes
-            s.sendall(nicknamewordpacket) #send the nickname
+            nickwordpacket = stdwp.create_word_packet(nickname, 'c')
+            s.sendall(nickwordpacket)
             return nickname
         else: #check for length
             print("Nickname should be 3-16 characters long. Retry:")
@@ -180,11 +176,7 @@ def ready_or_retry(s, nickname):
                 s.close()
                 os._exit(0)
             else:
-                chatlength = len(chat) #otherwise just send the chat
-                typechat = b't'
-                bytechat = chatlength.to_bytes(2, byteorder='big')
-                chatbytes = bytes(chat, 'utf-8')
-                chatwordpacket = bytechat + typechat + chatbytes
+                chatwordpacket = stdwp.create_word_packet(chat, 't')
                 s.sendall(chatwordpacket)
                 break
         elif ready_or_not == "RETRY":
@@ -281,6 +273,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
 
 
 
