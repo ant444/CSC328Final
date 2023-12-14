@@ -248,7 +248,7 @@ def main():
                             print("Goodbye.")
                             exit()
                     if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
-                        newchatmsg = input(f"{nickname}'s chat message: ") #get user input
+                        newchatmsg = input(f" chat message: ") #get user input
                         banned_chars = ['~']
                         containsBannedChatChar = False
                         for char in banned_chars:
